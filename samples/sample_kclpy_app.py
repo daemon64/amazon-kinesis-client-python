@@ -5,11 +5,14 @@
 
 from __future__ import print_function
 
+import os
 import sys
 import time
 
 from amazon_kclpy import kcl
 from amazon_kclpy.v3 import processor
+
+from kafka import KafkaProducer
 
 
 class RecordProcessor(processor.RecordProcessorBase):
@@ -28,6 +31,7 @@ class RecordProcessor(processor.RecordProcessorBase):
         self._largest_seq = (None, None)
         self._largest_sub_seq = None
         self._last_checkpoint_time = None
+        self.__producer = KafkaProducer(bootstrap_servers=os.environ['BOOTSTRAP_SERVERS'])
 
     def log(self, message):
         sys.stderr.write(message)
@@ -92,6 +96,7 @@ class RecordProcessor(processor.RecordProcessorBase):
         ####################################
         # Insert your processing logic here
         ####################################
+        self.__producer.send(os.environ['PUSH_TOPIC'], data)
         self.log("Record (Partition Key: {pk}, Sequence Number: {seq}, Subsequence Number: {sseq}, Data Size: {ds}"
                  .format(pk=partition_key, seq=sequence_number, sseq=sub_sequence_number, ds=len(data)))
 
